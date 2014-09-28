@@ -1,0 +1,84 @@
+* Preliminares
+
+Esta guía esta basada totalmente en [[https://wiki.duraspace.org/display/DSDOC4x/DSpace%2B4.x%2BDocumentation][el wiki de Dspace]] y fue elaborada con Org-mode.
+
+Esta guía usa Dspace 4.1 debido a que  la versión 3.x tiene problemas con las configuraciones de
+correo electrónico que son esenciales para el funcionamiento del software.
+
+Usarán las siguientes rutas de instalación:
+
+1. Carpeta de instalación del software
+   /srv/dspace = [dspace]
+2. Carpeta donde se descomprimen las fuentes del software
+   $HOME/dspace-4.x-release/ = [dspace-sources]
+
+* Requerimientos
+
+1. Postgresql
+2. Glassfish, Apache  Tomcat, JBoss  o  algún otro  servidor de  aplicaciones. Será  necesario
+  configurar  el servidor  de  aplicaciones  con un  certificado  SSL  válido (recomendado)  o
+  modificar la configuración del repositorio.
+3. Un editor de texto decente. Este archivo lo leeras mejor en Emacs.
+4. Un servidor de correo. Especificamente los datos de uso de SMTP
+5. Es recomendable obtener un prefijo de manejo de documentos  registrandose en [[http://www.handle.net/][Handle System]]
+
+* Instalación
+
+1. Descargar y descomprimir Dspace 4.x
+   Esto creará la ruta [dspace-sources]
+2. Crear una instancia en el servidor de aplicaciones. En este caso se usa Glassfish:
+   1. Crear un Dominio en Glassfish para Dspace y eliminar el predeterminado
+      1. # ./asadmin delete-domain --domaindir ../glassfish/domains/ domain1
+      2. # ./asadmin create-domain --savemasterpassword dspace
+      3. # ./asadmin start-domain dspace
+      4. # ./asadmin enable-secure-admin
+3. Crear la base de datos Postgresql
+   1. # passwd postgres
+   2. # su - postgres
+   3. $ psql -c "ALTER USER postgres WITH PASSWORD 'un_password_aquí'"
+   4. $ createuser  -d -A -P dspace
+   5. # gpasswd -a dspace postgres
+   6. # su - dspace
+   7. $ createdb -U dspace -E UNICODE dspace
+4. Configurar fuentes
+   1. # cd [dspace-sources]
+   2. Editar configuaración básica del repositorio, los  datos de ARLENAH están contenidos en el
+      archivo muestra [[file:files/build.properties][build.properties]]
+      1. $EDITOR build.properties
+   3. Editar  configuración   general  de   Dspace,  principalmente   el  soporte   automático
+    multilingüe. Los datos de ARLENAH están contenido en el archivo muestra [[file:files/dspace.cfg][dspace.cfg]]
+      1. $EDITOR dspace/config/dspace.cfg
+         1. Como referencia, es indispensable configurar las variables siguientes:
+            + webui.supported.locales
+            + default.locale
+            + xmlui.supported.locales
+      2. Configurar el mensaje de bienvenida del  repositorio. Para ARLENAH se usará la interfaz
+         XMLUI y un ejemplo del mensaje de bienvenida se encuentra en [[file:files/news-xmlui.xml][news-xmlui.xml]]
+         1. $EDITOR dspace/config/news-xmlui.xml
+      3. Cambiar  la licencia de  uso del repositorio. Se  sugiere la licencia  [[file:files/by-nc-sa][Creative Commons
+         Attribution-NonCommercial-ShareAlike 4.0 International]]
+         1. $EDITOR dspace/config/default.license
+      4. Configurar las  plantillas de correo electrónico. Un ejemplo  para ARLENAH se encuentra
+         en [[file:files/emails][emails]]
+         1. Estas plantillas deben modificarse en [dspace-sources]/dspace/config/emails
+      5. Modificar formulario para agregar  documentos. Este formulario debe personalizarse para
+         que use los metadatos relevantes para el  repositorio según la norma de Dublin Core. El
+         ejemplo     para     el    ARLENAH     se     encuentra     en    [[file:files/input-forms.xml][input-forms.xml]]     y
+         en [[file:files/input-forms_es.xml][input-forms_es.xml]] para la traducción en español.
+         1. Muy importante leer la [[https://wiki.duraspace.org/display/DSDOC4x/Metadata%2Band%2BBitstream%2BFormat%2BRegistries][descripción de los metadatos de DC]] antes de modificar
+         2. $EDITOR [dspace-sources]/dspace/config/input-forms.xml
+   4. Compilar Dspace.
+      1. # cd [dspace-sources]/dspace
+      2. # mvn clean package
+      3. # cd [dspace-sources]/dspace/target/dspace-4.x-build
+      4. # ant install
+5. Modificar  mensajes de  la interfaz de  Dspace. Los  mensajes se actualizan  cada vez  que se
+   compila Dspace,  por eso modificarlos desde  las fuentes no  es correcto, los cambios  ahí no
+   serán permanentes.  Los mensajes  usados hasta la  creación de este  manual se  encuentran en
+   [[file:files/messages.xml][inglés]] y en [[file:files/messages_es.xml][español]] y deben ser colocados en [dspace]/webapps/xmlui/i18n
+6.   Para   modificar   el   tema,   hay    que   sustituir   el   contenido   de   la   carpeta
+   [dspace]/webapps/xmlui/themes/Mirage  por  el  de  la  carpeta  [[https://github.com/genomorro/ARLENAH][Arlenah  del  repositorio  de
+     Github]]. Esta carpeta puede ser modificada para diseñar un tema propio de DSpace.
+7. Agregar las webapps de [dspace]/webapps al servidor de aplicaciones
+8. Iniciar el servidor de aplicaciones.
+

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<document xmlns="http://di.tamu.edu/DRI/1.0/" xmlns:i18n="http://apache.org/cocoon/i18n/2.1" version="1.1">
+<body>
+<div id="file.news.div.news" n="news" rend="primary">
+<head>ARLENAH</head>
+<p>El Archivo  de Lenguas de  la ENAH (ARLENAH) debe  proporcionar una plataforma  que organice,
+sistematice y  acumule información  sobre lenguas  para ponerlas  a disposición  de estudiantes,
+investigadores y público  en general, como herramienta de custodia,  difusión e investigación de
+los materiales socio-lingüísticos  que producen los estudiantes, profesores  e investigadores en
+las diferentes regiones lingüísticas en donde realizan sus actividades profesionales.</p>
+<p>The Language Archive of the ENAH (ARLENAH) should provide a platform to organize, systematize
+and earn about languages ​​to make them available to students, researchers and the general public,
+as  a tool  of custody,  dissemination and  research of  socio-linguistic materials  produced by
+students, teachers  and researchers  in the  various language regions  where they  perform their
+professional activities.</p>
+</div>
+</body>
+<options/>
+<meta>
+<userMeta/>
+<pageMeta/>
+<repositoryMeta/>
+</meta>
+</document>

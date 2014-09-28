@@ -1,0 +1,531 @@
+* Actividades sobre 172.20.108.201
+** Preliminares
+1. De momento se retiran Apache y MySQL como servicios de arranque automático.
+2. Instalación de software adicional:
+   1. GNU/Emacs
+   2. Git
+** Instalación DSpace
+*** Descarga del software
+palenque@palenque:~/Documentos$ wget http://softlayer-dal.dl.sourceforge.net/project/dspace/DSpace%20Stable/3.2/dspace-3.2-release.tar.gz
+--2013-08-26 14:54:50--  http://softlayer-dal.dl.sourceforge.net/project/dspace/DSpace%20Stable/3.2/dspace-3.2-release.tar.gz
+Resolviendo softlayer-dal.dl.sourceforge.net (softlayer-dal.dl.sourceforge.net)... 67.228.157.232
+Conectando con softlayer-dal.dl.sourceforge.net (softlayer-dal.dl.sourceforge.net)[67.228.157.232]:80... conectado.
+Petición HTTP enviada, esperando respuesta... 200 OK
+Longitud: 3764983 (3,6M) [application/x-gzip]
+Grabando a: “dspace-3.2-release.tar.gz”
+
+100%[==========================================================================>] 3.764.983   1,44M/s   en 2,5s    
+
+2013-08-26 14:54:53 (1,44 MB/s) - “dspace-3.2-release.tar.gz” guardado [3764983/3764983]
+*** Ajustes sobre Glassfish
+1. Quitar el dominio predeterminado
+   root@palenque:/opt/glassfish3/bin# ./asadmin delete-domain --domaindir ../glassfish/domains/ domain1
+2. Crear un dominio para DSpace
+   root@palenque:/opt/glassfish3/bin# ./asadmin create-domain --savemasterpassword dspace
+   root@palenque:/opt/glassfish3/bin# ./asadmin start-domain dspace
+3. Habilitar adminsitración remota
+   root@palenque:/opt/glassfish3/bin# ./asadmin enable-secure-admin
+*** Ajustes sobre PostgreSQL
+palenque@palenque:~/Documentos$ sudo su
+root@palenque:/home/palenque/Documentos# cd
+root@palenque:~# passwd postgres
+Introduzca la nueva contraseña de UNIX: 
+Vuelva a escribir la nueva contraseña de UNIX: 
+passwd: password updated successfully
+postgres@palenque:~$ psql -c "ALTER USER postgres WITH PASSWORD 'un_password_aquí'"
+ALTER ROLE
+postgres@palenque:~$ createuser  -d -A -P dspace
+Enter password for new role: 
+Enter it again: 
+Shall the new role be allowed to create more new roles? (y/n) n
+postgres@palenque:~$ logout
+root@palenque:~# gpasswd -a dspace postgres
+root@palenque:~# su - dspace
+$ createdb -U dspace -E UNICODE dspace
+*** Proceso de configuración
+root@palenque:~# exit
+palenque@palenque:~/Documentos$ ls
+dspace-3.2-release.tar.gz  dspace-3.2-src-release.tar.gz
+palenque@palenque:~/Documentos$ tar xzf dspace-3.2-release.tar.gz 
+palenque@palenque:~/Documentos$ cd dspace-3.2-release/
+palenque@palenque:~/Documentos/dspace-3.2-release$ ls
+build.properties  dspace  LICENSE  LICENSE_HEADER  LICENSES_THIRD_PARTY  NOTICE  pom.xml  README
+palenque@palenque:~/Documentos/dspace-3.2-release$ emacs build.properties 
+palenque@palenque:~/Documentos/dspace-3.2-release/dspace$ mvn package
+root@palenque:/home/palenque/Documentos/dspace-3.2-release/dspace/target/dspace-3.2-build#   ant
+fresh_install
+     [echo] ====================================================================
+     [echo]  The DSpace code has been installed, and the database initialized.
+     [echo] 
+     [echo]  To complete installation, you should do the following:
+     [echo] 
+     [echo]  * Setup your Web servlet container (e.g. Tomcat) to look for your
+     [echo]    DSpace web applications in: /opt/glassfish3/glassfish/domains/dspace/docroot/webapps/
+     [echo] 
+     [echo]    OR, copy any web applications from /opt/glassfish3/glassfish/domains/dspace/docroot/webapps/ to
+     [echo]    the appropriate place for your servlet container.
+     [echo]    (e.g. '$CATALINA_HOME/webapps' for Tomcat)
+     [echo] 
+     [echo]  * Make an initial administrator account (an e-person) in DSpace:
+     [echo] 
+     [echo]    /opt/glassfish3/glassfish/domains/dspace/docroot/bin/dspace create-administrator
+     [echo] 
+     [echo]  * Start up your servlet container (Tomcat etc.)
+     [echo] 
+     [echo]  You should then be able to access your DSpace's 'home page':
+     [echo] 
+     [echo]    http://localhost:8080/xmlui
+     [echo] 
+     [echo] ====================================================================
+     [echo]         
+
+BUILD SUCCESSFUL
+Total time: 1 minute 10 seconds
+
+dspace@palenque:/srv/dspace/bin$ ./dspace create-administrator
+ INFO [main] (DSpaceKernelInit.java:52) - Created new kernel: DSpaceKernel:org.dspace:name=2db439e5-e2f4-4f80-9db0-b8d042eff085,type=DSpaceKernel:lastLoad=null:loadTime=0:running=false:kernel=null
+ INFO [main] (ConfigurationManager.java:1224) - Loading from classloader: file:/srv/dspace/config/dspace.cfg
+ INFO [main] (ConfigurationManager.java:1224) - Using dspace provided log configuration (log.init.config)
+ INFO [main] (ConfigurationManager.java:1224) - Loading: /srv/dspace/config/log4j.properties
+Creating an initial administrator account
+E-mail address: correo@mailoo.org
+First name: Edgar Uriel
+Last name: Domínguez Espinoza
+WARNING: Password will appear on-screen.
+Password: 
+Again to confirm: 
+Is the above data correct? (y or n): y
+Administrator account created
+*** Agregar applets a Glassfish
+La ubicación de las apps es /srv/dspace/webapps.
+El applet predeterminado es xmlui.
+
+** Posteriores
+1. En el archivo pg_hba.conf de PostgreSQL cambiar la seguridad a md5
+
+** Recontruir para soporte multilingüe
+Modificar dspace-3.2-release/dspace/config/dspace.cfg:
+
++ webui.supported.locales
++ default.locale
++ xmlui.supported.locales
+
+palenque@palenque:~/Documentos/dspace-3.2-release/dspace$ mvn clean package
+root@palenque:/home/palenque/Documentos/dspace-3.2-release/dspace/target/dspace-3.2-build# ant update 
+
+Mensaje de bienvenida[Funciona]: [dspace-source]/dspace/config/news-xmlui.xml
+
+Emails[Funciona]: [dspace]/config/emails
+
+Mensajes interfaz[No funciona]: [dspace-source]/dspace/modules/xmlui/src/main/webapp/i18n/
+
+
+** Soporte SSL en la comunicación por correo
+Descomentar y verificar en dspace-3.2-release/dspace/config/dspace.cfg:
+# Pass extra settings to the Java mail library. Comma-separated, equals sign between
+# the key and the value. For example:
+mail.extraproperties = mail.smtp.socketFactory.port=587, \
+                      mail.smtp.socketFactory.class=javax.net.ssl.SSLSocketFactory, \
+                      mail.smtp.socketFactory.fallback=false
+
+palenque@palenque:~/Documentos/dspace-3.2-release/dspace$ mvn clean package
+root@palenque:/home/palenque/Documentos/dspace-3.2-release/dspace/target/dspace-3.2-build# ant update 
+
+Nota: Los puertos en dspace.cfg y build.properties deben coincidir.
+** Agregar un metadato al formulario
+1. Entrar en el sistema con cuenta de administrador.
+2. Ir a DSpace Principal→Registro de Metadatos→Esquema de metadatos
+3. Seleccionar el esquema de metados, dc es el predeterminado. Si el metadato no esta en la lista actual, se puede agregar. Recuerde que el formato es: esquema.elemento.clasificador, sigue el formulario de DSpace.
+4. Modificar el formulario:
+   1. Ir a /home/palenque/Documentos/dspace-3.2-release/dspace/config/input-forms.xml y agregar un campo bajo este formato:
+      <field>
+      <dc-schema>dc</dc-schema>
+      <dc-element></dc-element>
+      <dc-qualifier></dc-qualifier>
+      <repeatable></repeatable>
+      <label></label>
+      <input-type></input-type>
+      <hint></hint>
+      <required></required>
+      </field>
+   2. Reconstruir DSpace
+   3. Más detalles en https://wiki.duraspace.org/display/DSPACE/Alter+submission+input+forms
+
+
+** Modificar CSS
+*** Encabezado
+http://localhost:8080/xmlui/themes/Mirage/lib/css/style.css
+- Ancho del contenido
+#no-js-warning, #ds-trail, #ds-header, #ds-footer, #ds-content {
+    margin: auto;
+    position: relative;
+    width: 950px;
+}
+- Color de Fondo
+#ds-header-wrapper {
+    background-color: #1F3F5E;
+    color: #FFFFFF;
+    min-width: 950px;
+}
+- Logotipo: width: 126px; y reemplazar imagen
+#ds-header-logo {
+    background: url("../../images/dspace-logo-only.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
+    float: left;
+    height: 50px;
+    margin-right: 15px;
+    margin-top: 10px;
+    width: 48px;
+}
+- Color de "Repositorio ARLENAH
+#ds-header-logo-text {
+    font-size: 400%;
+    color: white;
+    line-height: 70px;
+    font-weight: normal;
+    vertical-align: middle;
+    float: left;
+}
+- Links del encabezado
+#ds-user-box a, #ds-language-selection a {
+    color: white;
+}
+- Texto header
+en page-structure.xsl:
+<!-- <span id="ds-header-logo-text"> -->
+<!--    <i18n:text>xmlui.dri2xhtml.structural.head-subtitle</i18n:text> -->
+<!-- </span> -->
+
+* Actividades a pendientes
+** TODO Hardening
+** DONE Actualizar la información del servidor de correo
+CLOSED: [2014-05-24 Sat 19:09]
+Posiblemente se requiera solicitar una cuenta de correo institucional
+
+El servidor de correo de INAH no requiere SSL.
+** TODO Crear guión de inicio para Glassfish
+** DONE Crear un flujo de trabajo para configurar DSpace
+CLOSED: [2014-05-24 Sat 19:09]
+** SOLVED Configurar SSL para el envio de correo
+CLOSED: [2014-05-24 Sat 19:09]
+Salta el siguiente error bajo conexiones SSL:
+
+com.sun.mail.smtp.SMTPSendFailedException: 530 5.7.0 Must issue a STARTTLS command first
+
+org.apache.cocoon.ProcessingException: Sitemap: error calling continuation
+	at <map:call> - resource://aspects/Administrative/sitemap.xmap:132:38
+	at <map:match type="request"> - resource://aspects/Administrative/sitemap.xmap:131:67
+	at <map:match> - resource://aspects/Administrative/sitemap.xmap:130:41
+	at <map:select type="AuthenticatedSelector"> - resource://aspects/Administrative/sitemap.xmap:124:45
+	at <map:mount> - jndi:/server/xmlui/aspects/aspects.xmap:89:72
+	at <map:select type="parameter"> - jndi:/server/xmlui/aspects/aspects.xmap:79:34
+	at <map:match type="AspectMatcher"> - jndi:/server/xmlui/aspects/aspects.xmap:78:36
+	at <map:mount> - jndi:/server/xmlui/sitemap.xmap:485:100
+	at <map:match> - jndi:/server/xmlui/sitemap.xmap:484:49
+	at <map:serialize type="xml"> - resource://aspects/EPerson/sitemap.xmap:302:31
+	at <map:transform type="Navigation"> - resource://aspects/EPerson/sitemap.xmap:107:38
+	at <map:generate> - resource://aspects/EPerson/sitemap.xmap:96:19
+	at <map:serialize type="xml"> - resource://aspects/Submission/sitemap.xmap:251:38
+	at <map:transform type="Navigation"> - resource://aspects/Submission/sitemap.xmap:107:45
+	at <map:generate> - resource://aspects/Submission/sitemap.xmap:104:26
+	at <map:serialize type="xml"> - resource://aspects/Statistics/sitemap.xmap:285:31
+	at <map:generate> - resource://aspects/Statistics/sitemap.xmap:37:19
+	at <map:serialize type="xml"> - resource://aspects/Workflow/sitemap.xmap:139:38
+	at <map:generate> - resource://aspects/Workflow/sitemap.xmap:76:26
+	at <map:serialize type="xml"> - jndi:/server/xmlui/aspects/aspects.xmap:85:34
+	at <map:transform type="PageNotFound"> - jndi:/server/xmlui/aspects/aspects.xmap:84:43
+	at <map:generate> - jndi:/server/xmlui/aspects/aspects.xmap:83:22
+	at <map:serialize type="xhtml"> - jndi:/server/xmlui/themes/Mirage/sitemap.xmap:164:34
+	at <map:transform type="i18n"> - jndi:/server/xmlui/themes/Mirage/sitemap.xmap:158:33
+	at <map:transform> - jndi:/server/xmlui/themes/Mirage/sitemap.xmap:153:51
+	at <map:transform type="IncludePageMeta"> - jndi:/server/xmlui/themes/Mirage/sitemap.xmap:140:55
+	at <map:transform type="IncludePageMeta"> - jndi:/server/xmlui/themes/Mirage/sitemap.xmap:135:55
+	at <map:transform type="IncludePageMeta"> - jndi:/server/xmlui/themes/Mirage/sitemap.xmap:126:55
+	at <map:generate type="file"> - jndi:/server/xmlui/themes/Mirage/sitemap.xmap:120:55
+	at <map:match> - jndi:/server/xmlui/themes/Mirage/sitemap.xmap:117:28
+	at <map:mount> - jndi:/server/xmlui/themes/themes.xmap:33:45
+	at <map:match type="ThemeMatcher"> - jndi:/server/xmlui/themes/themes.xmap:32:35
+	at <map:mount> - jndi:/server/xmlui/sitemap.xmap:652:94
+	at org.apache.cocoon.ProcessingException.throwLocated(ProcessingException.java:111)
+	at org.apache.cocoon.components.treeprocessor.sitemap.CallFunctionNode.invoke(CallFunctionNode.java:96)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:55)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MatchNode.invoke(MatchNode.java:87)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:55)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MatchNode.invoke(MatchNode.java:87)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.SelectNode.invoke(SelectNode.java:82)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelineNode.invoke(PipelineNode.java:143)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelinesNode.invoke(PipelinesNode.java:81)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:239)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.buildPipeline(ConcreteTreeProcessor.java:186)
+	at org.apache.cocoon.components.treeprocessor.TreeProcessor.buildPipeline(TreeProcessor.java:260)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MountNode.invoke(MountNode.java:107)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.SelectNode.invoke(SelectNode.java:87)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:55)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MatchNode.invoke(MatchNode.java:87)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelineNode.invoke(PipelineNode.java:143)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelinesNode.invoke(PipelinesNode.java:81)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:239)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.buildPipeline(ConcreteTreeProcessor.java:186)
+	at org.apache.cocoon.components.treeprocessor.TreeProcessor.buildPipeline(TreeProcessor.java:260)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MountNode.invoke(MountNode.java:107)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:55)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MatchNode.invoke(MatchNode.java:87)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelineNode.invoke(PipelineNode.java:143)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelinesNode.invoke(PipelinesNode.java:81)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:239)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.buildPipeline(ConcreteTreeProcessor.java:186)
+	at org.apache.cocoon.components.treeprocessor.TreeProcessor.buildPipeline(TreeProcessor.java:260)
+	at org.apache.cocoon.components.source.impl.SitemapSource.init(SitemapSource.java:277)
+	at org.apache.cocoon.components.source.impl.SitemapSource.<init>(SitemapSource.java:148)
+	at org.apache.cocoon.components.source.impl.SitemapSourceFactory.getSource(SitemapSourceFactory.java:62)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:153)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:183)
+	at org.apache.cocoon.generation.FileGenerator.setup(FileGenerator.java:99)
+	at org.dspace.app.xmlui.cocoon.AspectGenerator.setup(AspectGenerator.java:81)
+	at sun.reflect.GeneratedMethodAccessor53.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy198.setup(Unknown Source)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.setupPipeline(AbstractProcessingPipeline.java:343)
+	at org.apache.cocoon.components.pipeline.impl.AbstractCachingProcessingPipeline.setupPipeline(AbstractCachingProcessingPipeline.java:710)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.preparePipeline(AbstractProcessingPipeline.java:466)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.prepareInternal(AbstractProcessingPipeline.java:480)
+	at sun.reflect.GeneratedMethodAccessor112.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy197.prepareInternal(Unknown Source)
+	at org.apache.cocoon.components.source.impl.SitemapSource.init(SitemapSource.java:292)
+	at org.apache.cocoon.components.source.impl.SitemapSource.<init>(SitemapSource.java:148)
+	at org.apache.cocoon.components.source.impl.SitemapSourceFactory.getSource(SitemapSourceFactory.java:62)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:153)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:183)
+	at org.apache.cocoon.generation.FileGenerator.setup(FileGenerator.java:99)
+	at org.dspace.app.xmlui.cocoon.AspectGenerator.setup(AspectGenerator.java:81)
+	at sun.reflect.GeneratedMethodAccessor53.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy198.setup(Unknown Source)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.setupPipeline(AbstractProcessingPipeline.java:343)
+	at org.apache.cocoon.components.pipeline.impl.AbstractCachingProcessingPipeline.setupPipeline(AbstractCachingProcessingPipeline.java:710)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.preparePipeline(AbstractProcessingPipeline.java:466)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.prepareInternal(AbstractProcessingPipeline.java:480)
+	at sun.reflect.GeneratedMethodAccessor112.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy197.prepareInternal(Unknown Source)
+	at org.apache.cocoon.components.source.impl.SitemapSource.init(SitemapSource.java:292)
+	at org.apache.cocoon.components.source.impl.SitemapSource.<init>(SitemapSource.java:148)
+	at org.apache.cocoon.components.source.impl.SitemapSourceFactory.getSource(SitemapSourceFactory.java:62)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:153)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:183)
+	at org.apache.cocoon.generation.FileGenerator.setup(FileGenerator.java:99)
+	at org.dspace.app.xmlui.cocoon.AspectGenerator.setup(AspectGenerator.java:81)
+	at sun.reflect.GeneratedMethodAccessor53.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy198.setup(Unknown Source)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.setupPipeline(AbstractProcessingPipeline.java:343)
+	at org.apache.cocoon.components.pipeline.impl.AbstractCachingProcessingPipeline.setupPipeline(AbstractCachingProcessingPipeline.java:710)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.preparePipeline(AbstractProcessingPipeline.java:466)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.prepareInternal(AbstractProcessingPipeline.java:480)
+	at sun.reflect.GeneratedMethodAccessor112.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy197.prepareInternal(Unknown Source)
+	at org.apache.cocoon.components.source.impl.SitemapSource.init(SitemapSource.java:292)
+	at org.apache.cocoon.components.source.impl.SitemapSource.<init>(SitemapSource.java:148)
+	at org.apache.cocoon.components.source.impl.SitemapSourceFactory.getSource(SitemapSourceFactory.java:62)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:153)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:183)
+	at org.apache.cocoon.generation.FileGenerator.setup(FileGenerator.java:99)
+	at org.dspace.app.xmlui.cocoon.AspectGenerator.setup(AspectGenerator.java:81)
+	at sun.reflect.GeneratedMethodAccessor53.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy198.setup(Unknown Source)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.setupPipeline(AbstractProcessingPipeline.java:343)
+	at org.apache.cocoon.components.pipeline.impl.AbstractCachingProcessingPipeline.setupPipeline(AbstractCachingProcessingPipeline.java:710)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.preparePipeline(AbstractProcessingPipeline.java:466)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.prepareInternal(AbstractProcessingPipeline.java:480)
+	at sun.reflect.GeneratedMethodAccessor112.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy197.prepareInternal(Unknown Source)
+	at org.apache.cocoon.components.source.impl.SitemapSource.init(SitemapSource.java:292)
+	at org.apache.cocoon.components.source.impl.SitemapSource.<init>(SitemapSource.java:148)
+	at org.apache.cocoon.components.source.impl.SitemapSourceFactory.getSource(SitemapSourceFactory.java:62)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:153)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:183)
+	at org.apache.cocoon.generation.FileGenerator.setup(FileGenerator.java:99)
+	at org.dspace.app.xmlui.cocoon.AspectGenerator.setup(AspectGenerator.java:81)
+	at sun.reflect.GeneratedMethodAccessor53.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy198.setup(Unknown Source)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.setupPipeline(AbstractProcessingPipeline.java:343)
+	at org.apache.cocoon.components.pipeline.impl.AbstractCachingProcessingPipeline.setupPipeline(AbstractCachingProcessingPipeline.java:710)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.preparePipeline(AbstractProcessingPipeline.java:466)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.prepareInternal(AbstractProcessingPipeline.java:480)
+	at sun.reflect.GeneratedMethodAccessor112.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy197.prepareInternal(Unknown Source)
+	at org.apache.cocoon.components.source.impl.SitemapSource.init(SitemapSource.java:292)
+	at org.apache.cocoon.components.source.impl.SitemapSource.<init>(SitemapSource.java:148)
+	at org.apache.cocoon.components.source.impl.SitemapSourceFactory.getSource(SitemapSourceFactory.java:62)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:153)
+	at org.apache.cocoon.components.source.CocoonSourceResolver.resolveURI(CocoonSourceResolver.java:183)
+	at org.apache.cocoon.generation.FileGenerator.setup(FileGenerator.java:99)
+	at sun.reflect.GeneratedMethodAccessor53.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy198.setup(Unknown Source)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.setupPipeline(AbstractProcessingPipeline.java:343)
+	at org.apache.cocoon.components.pipeline.impl.AbstractCachingProcessingPipeline.setupPipeline(AbstractCachingProcessingPipeline.java:710)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.preparePipeline(AbstractProcessingPipeline.java:466)
+	at org.apache.cocoon.components.pipeline.AbstractProcessingPipeline.process(AbstractProcessingPipeline.java:411)
+	at sun.reflect.GeneratedMethodAccessor118.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.apache.cocoon.core.container.spring.avalon.PoolableProxyHandler.invoke(PoolableProxyHandler.java:71)
+	at com.sun.proxy.$Proxy197.process(Unknown Source)
+	at org.apache.cocoon.components.treeprocessor.sitemap.SerializeNode.invoke(SerializeNode.java:147)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:55)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MatchNode.invoke(MatchNode.java:87)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelineNode.invoke(PipelineNode.java:143)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelinesNode.invoke(PipelinesNode.java:81)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:239)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:171)
+	at org.apache.cocoon.components.treeprocessor.TreeProcessor.process(TreeProcessor.java:247)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MountNode.invoke(MountNode.java:117)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:55)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MatchNode.invoke(MatchNode.java:87)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelineNode.invoke(PipelineNode.java:143)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelinesNode.invoke(PipelinesNode.java:81)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:239)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:171)
+	at org.apache.cocoon.components.treeprocessor.TreeProcessor.process(TreeProcessor.java:247)
+	at org.apache.cocoon.components.treeprocessor.sitemap.MountNode.invoke(MountNode.java:117)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelineNode.invoke(PipelineNode.java:143)
+	at org.apache.cocoon.components.treeprocessor.AbstractParentProcessingNode.invokeNodes(AbstractParentProcessingNode.java:78)
+	at org.apache.cocoon.components.treeprocessor.sitemap.PipelinesNode.invoke(PipelinesNode.java:81)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:239)
+	at org.apache.cocoon.components.treeprocessor.ConcreteTreeProcessor.process(ConcreteTreeProcessor.java:171)
+	at org.apache.cocoon.components.treeprocessor.TreeProcessor.process(TreeProcessor.java:247)
+	at org.apache.cocoon.servlet.RequestProcessor.process(RequestProcessor.java:351)
+	at org.apache.cocoon.servlet.RequestProcessor.service(RequestProcessor.java:169)
+	at org.apache.cocoon.sitemap.SitemapServlet.service(SitemapServlet.java:84)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:790)
+	at org.apache.cocoon.servletservice.ServletServiceContext$PathDispatcher.forward(ServletServiceContext.java:468)
+	at org.apache.cocoon.servletservice.ServletServiceContext$PathDispatcher.forward(ServletServiceContext.java:443)
+	at org.apache.cocoon.servletservice.spring.ServletFactoryBean$ServiceInterceptor.invoke(ServletFactoryBean.java:264)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:172)
+	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:202)
+	at com.sun.proxy.$Proxy194.service(Unknown Source)
+	at org.dspace.springmvc.CocoonView.render(CocoonView.java:113)
+	at org.springframework.web.servlet.DispatcherServlet.render(DispatcherServlet.java:1180)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:950)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:852)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:882)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:789)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:707)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:790)
+	at org.apache.catalina.core.StandardWrapper.service(StandardWrapper.java:1682)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:344)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:214)
+	at org.dspace.app.xmlui.cocoon.SetCharacterEncodingFilter.doFilter(SetCharacterEncodingFilter.java:111)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:256)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:214)
+	at org.dspace.app.xmlui.cocoon.DSpaceCocoonServletFilter.doFilter(DSpaceCocoonServletFilter.java:269)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:256)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:214)
+	at org.dspace.app.xmlui.cocoon.servlet.multipart.DSpaceMultipartFilter.doFilter(DSpaceMultipartFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:256)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:214)
+	at org.dspace.utils.servlet.DSpaceWebappServletFilter.doFilter(DSpaceWebappServletFilter.java:78)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:256)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:214)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:316)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:160)
+	at org.apache.catalina.core.StandardPipeline.doInvoke(StandardPipeline.java:734)
+	at org.apache.catalina.core.StandardPipeline.invoke(StandardPipeline.java:673)
+	at com.sun.enterprise.web.WebPipeline.invoke(WebPipeline.java:99)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:174)
+	at org.apache.catalina.connector.CoyoteAdapter.doService(CoyoteAdapter.java:357)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:260)
+	at com.sun.enterprise.v3.services.impl.ContainerMapper.service(ContainerMapper.java:188)
+	at org.glassfish.grizzly.http.server.HttpHandler.runService(HttpHandler.java:191)
+	at org.glassfish.grizzly.http.server.HttpHandler.doHandle(HttpHandler.java:168)
+	at org.glassfish.grizzly.http.server.HttpServerFilter.handleRead(HttpServerFilter.java:189)
+	at org.glassfish.grizzly.filterchain.ExecutorResolver$9.execute(ExecutorResolver.java:119)
+	at org.glassfish.grizzly.filterchain.DefaultFilterChain.executeFilter(DefaultFilterChain.java:288)
+	at org.glassfish.grizzly.filterchain.DefaultFilterChain.executeChainPart(DefaultFilterChain.java:206)
+	at org.glassfish.grizzly.filterchain.DefaultFilterChain.execute(DefaultFilterChain.java:136)
+	at org.glassfish.grizzly.filterchain.DefaultFilterChain.process(DefaultFilterChain.java:114)
+	at org.glassfish.grizzly.ProcessorExecutor.execute(ProcessorExecutor.java:77)
+	at org.glassfish.grizzly.nio.transport.TCPNIOTransport.fireIOEvent(TCPNIOTransport.java:838)
+	at org.glassfish.grizzly.strategies.AbstractIOStrategy.fireIOEvent(AbstractIOStrategy.java:113)
+	at org.glassfish.grizzly.strategies.WorkerThreadIOStrategy.run0(WorkerThreadIOStrategy.java:115)
+	at org.glassfish.grizzly.strategies.WorkerThreadIOStrategy.access$100(WorkerThreadIOStrategy.java:55)
+	at org.glassfish.grizzly.strategies.WorkerThreadIOStrategy$WorkerThreadRunnable.run(WorkerThreadIOStrategy.java:135)
+	at org.glassfish.grizzly.threadpool.AbstractThreadPool$Worker.doWork(AbstractThreadPool.java:564)
+	at org.glassfish.grizzly.threadpool.AbstractThreadPool$Worker.run(AbstractThreadPool.java:544)
+	at java.lang.Thread.run(Thread.java:744)
+Caused by: org.mozilla.javascript.WrappedException: Wrapped com.sun.mail.smtp.SMTPSendFailedException: 530 5.7.0 Must issue a STARTTLS command first
+ (resource://aspects/Administrative/administrative.js#787)
+	at org.mozilla.javascript.Context.throwAsScriptRuntimeEx(Context.java:1757)
+	at org.mozilla.javascript.MemberBox.invoke(MemberBox.java:170)
+	at org.mozilla.javascript.NativeJavaMethod.call(NativeJavaMethod.java:243)
+	at org.mozilla.javascript.Interpreter.interpretLoop(Interpreter.java:3237)
+	at org.mozilla.javascript.Interpreter.interpret(Interpreter.java:2394)
+	at org.mozilla.javascript.InterpretedFunction.call(InterpretedFunction.java:162)
+	at org.mozilla.javascript.ContextFactory.doTopCall(ContextFactory.java:393)
+	at org.mozilla.javascript.ScriptRuntime.doTopCall(ScriptRuntime.java:2834)
+	at org.mozilla.javascript.InterpretedFunction.call(InterpretedFunction.java:160)
+	at org.mozilla.javascript.Context.call(Context.java:538)
+	at org.mozilla.javascript.ScriptableObject.callMethod(ScriptableObject.java:1833)
+	at org.mozilla.javascript.ScriptableObject.callMethod(ScriptableObject.java:1803)
+	at org.apache.cocoon.components.flow.javascript.fom.FOM_JavaScriptInterpreter.handleContinuation(FOM_JavaScriptInterpreter.java:698)
+	at org.apache.cocoon.components.treeprocessor.sitemap.CallFunctionNode.invoke(CallFunctionNode.java:94)
+	... 247 more
+Caused by: com.sun.mail.smtp.SMTPSendFailedException: 530 5.7.0 Must issue a STARTTLS command first
+
+	at com.sun.mail.smtp.SMTPTransport.issueSendCommand(SMTPTransport.java:2110)
+	at com.sun.mail.smtp.SMTPTransport.mailFrom(SMTPTransport.java:1609)
+	at com.sun.mail.smtp.SMTPTransport.sendMessage(SMTPTransport.java:1117)
+	at javax.mail.Transport.send0(Transport.java:254)
+	at javax.mail.Transport.send(Transport.java:124)
+	at org.dspace.core.Email.send(Email.java:366)
+	at org.dspace.eperson.AccountManager.sendEmail(AccountManager.java:262)
+	at org.dspace.eperson.AccountManager.sendInfo(AccountManager.java:222)
+	at org.dspace.eperson.AccountManager.sendForgotPasswordInfo(AccountManager.java:87)
+	at org.dspace.app.xmlui.aspect.administrative.FlowEPersonUtils.processResetPassword(FlowEPersonUtils.java:234)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.mozilla.javascript.MemberBox.invoke(MemberBox.java:155)
+	... 259 more

@@ -1,0 +1,59 @@
+* Creación de usuarios:
+La interfaz web  del repositorio permite a  un administrador crear usuarios, sin  embargo, si es
+necesario que  un usuario tenga una  contraseña prederminada por el  administrador es preferente
+usar la cli de dspace de la siguiente manera:
+
+$[dspace]/bin/dspace user --add --email jquser@example.com -g John -s User --password hiddensecret
+
+Los únicos grupos obligatorios en el repositorio son:
+
++ Administrator
++ Anonymous
+
+Los demás grupos deben estar ligados a alguna comunidad.
+
+* Al crear una  comunidad se crea también  un grupo de usuarios con  el nombre COMMUNITY_#_ADMIN
+donde # es el número de comunidad
+
+* Al crear una colección:
+** Se crea el grupo de administradores COLLECTION_#_ADMIN para administradores de la colección
+Los administradores de la colección deciden quién puede enviar ítems a la colección, retirarlos,
+editar  los metadatos  (después  del envío)  y  añadir (relacionar)  ítems  existentes de  otras
+colecciones a esta colección (dependiendo de la autorización de esta colección).
+** Se crea el grupo de publicadores COLLECTION_#_SUBMIT para publicadores
+Usuarios y grupos que tienen permiso de envío de ítems nuevos a esta colección
+** Se crea el grupo de publicadores COLLECTION_#_WORKFLOW_STEP_1 para el primer paso del flujo de trabajo
+Las personas responsables de este paso podrán aceptar o rechazar envíos pendientes. Sin embargo,
+no podrán editar los metadatos del envío.
+** Se crea el grupo de publicadores COLLECTION_#_WORKFLOW_STEP_2 para el segundo paso del flujo de trabajo
+Las personas responsables  de este paso podrán  editar los metadatos de los  envíos pendientes y
+aceptar o rechazar los envíos.
+** Se crea el grupo de publicadores COLLECTION_#_WORKFLOW_STEP_3 para el tercer paso del flujo de trabajo
+Las personas responsables de este paso podrán editar los metadatos de los envíos pendientes pero
+no podrán rechazar los envíos.
+
+
+* Embargo de los Archivos
+Leer http://www.arvo.es/dspace/embargo-en-dspace-3-x/
+https://wiki.duraspace.org/display/DSDOC4x/Embargo
+
+* Oficio para la petición de creación de un nuevo proyecto dentro del repositorio
+
+1. Nombre del Proyecto
+2. Descripción del proyecto
+3. Estructura interna  del proyecto  que se  reflejará en  los niveles  del repositorio,  desde
+   comunidad hasta colección.
+4. Tipo de proyecto: Privado o Acceso Abierto
+5. Administrador del proyecto
+6. Personas que podrán publicar en el repositorio
+7. Encargado(s) de verificar las publicaciones dentro del flujo de trabajo
+
+Cada una de las personas requeridas en los espacios [5-7] deben dar la siguiente información:
+
+1. Nombre completo
+2. Correo electrónico
+3. Teléfono de contacto (opcional)
+
+* Procesamiento del oficio
+
+El administrador creará primero los usuarios y después la comunidad con el nombre del proyecto.

@@ -1,0 +1,30 @@
+* Comunidad
+
+Una comunidad  la forma un grupo  de investigadores que  trabajan en un proyecto  específico. La
+comunidad lleva el nombre del proyecto o del trabajo del investigador.
+
+Una comunidad puede tener sub-comunidades, que  funcionan teóricamente como comunidades, pero se
+utilizan cuando se requiere definir una extensión o especialización de la comunidad mayor.
+
+** Colección
+
+Una   comunidad  contiene   colecciones.  Las   colecciones  son   agrupaciones  de   contenidos
+relacionados. Una  colección no puede  contener otras otras  colecciones y debe  estar contenida
+siempre dentro de una  comunidad. Si la comunidad desaparece del repositorio  también lo hará la
+colección.
+
+En el  caso del  ARLENAH las  colecciones llevan  el nombre de  la lengua,  porque es  la lengua
+nuestro interés principal.
+
+**** Item
+     
+El item sirve  para hacer modificaciones sobre  algunos de los metadatos  ingresados o para
+borrar elementos del repositorio. 
+
+Un item es un juego de archivos producto de la investigación que realiza la comunidad. Así,
+un item puede contener uno o más archivos, dependiendo en el carácter del contenido.
+
+***** Bitstream
+      
+Incluye información del archivo y la licencia de del mismo.
+      
